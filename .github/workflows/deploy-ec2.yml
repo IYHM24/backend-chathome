@@ -22,13 +22,15 @@ jobs:
         ls -la
         
     - name: Restore dependencies
-      run: dotnet restore WebSockets.sln
+      run: |
+        ls -R
+        dotnet restore
         
     - name: Build
       run: dotnet build --configuration Release
     
     - name: Publish
-      run: dotnet publish Web/WebSockets/WebSockets.csproj --configuration Release --output ./publish
+      run: dotnet publish --configuration Release --output ./publish
     
     - name: Generate web.config
       run: |
