@@ -33,6 +33,7 @@ bld/
 
 #Files and folders 
 key/firebase/firebase_priv_key.json
+appsettings.Development.json
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
