@@ -6,6 +6,14 @@ using WebSockets.Hubs;
 using static System.Net.WebRequestMethods;
 
 var builder = WebApplication.CreateBuilder(args);
+var firebaseConfig = builder.Environment.IsDevelopment()
+    ? System.Text.Json.JsonSerializer.Serialize(
+        builder.Configuration.GetSection("firebase:config").Get<Dictionary<string, object>>())
+    : Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS");
+
+if (string.IsNullOrEmpty(firebaseConfig))
+    throw new InvalidOperationException("Firebase credentials not found");
+
 
 // Add services to the container.
 builder.WebHost.UseUrls("http://0.0.0.0:5069");
@@ -72,7 +80,7 @@ builder.Services.AddSwaggerGen(c =>
 // Inicializar Firebase
 FirebaseApp.Create(new AppOptions()
 {
-    Credential = GoogleCredential.FromFile(builder.Configuration["firebase:path"]) // o usar ApplicationDefault
+    Credential = GoogleCredential.FromJson(firebaseConfig)
 });
 
 // Configura autenticación JWT
