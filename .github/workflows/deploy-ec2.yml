@@ -16,14 +16,18 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
+    - name: List Solution Structure
+      run: |
+        ls -R
+        
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore WebSockets.sln
         
     - name: Build
-      run: dotnet build --no-restore --configuration Release
+      run: dotnet build WebSockets.sln --no-restore --configuration Release
     
     - name: Publish
-      run: dotnet publish --no-build --configuration Release --output ./publish
+      run: dotnet publish WebSockets/WebSockets.csproj --no-build --configuration Release --output ./publish
     
     - name: Generate web.config
       run: |
