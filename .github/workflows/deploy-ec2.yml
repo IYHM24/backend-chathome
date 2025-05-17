@@ -18,19 +18,17 @@ jobs:
     
     - name: List Solution Structure
       run: |
-        ls -R
+        pwd
+        ls -la
         
     - name: Restore dependencies
-      working-directory: ./WebSockets
-      run: dotnet restore
+      run: dotnet restore WebSockets.sln
         
     - name: Build
-      working-directory: ./WebSockets
       run: dotnet build --configuration Release
     
     - name: Publish
-      working-directory: ./WebSockets
-      run: dotnet publish --configuration Release --output ../publish
+      run: dotnet publish Web/WebSockets/WebSockets.csproj --configuration Release --output ./publish
     
     - name: Generate web.config
       run: |
