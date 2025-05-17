@@ -1,0 +1,66 @@
+name: Build and Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore
+        
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Publish
+      run: dotnet publish --no-build --configuration Release --output ./publish
+    
+    - name: Generate web.config
+      run: |
+        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+        <configuration>
+          <location path=\".\" inheritInChildApplications=\"false\">
+            <system.webServer>
+              <handlers>
+                <add name=\"aspNetCore\" path=\"*\" verb=\"*\" modules=\"AspNetCoreModuleV2\" resourceType=\"Unspecified\" />
+              </handlers>
+              <aspNetCore processPath=\"dotnet\" arguments=\".\WebSockets.dll\" 
+                stdoutLogEnabled=\"false\" stdoutLogFile=\".\logs\stdout\" hostingModel=\"inprocess\">
+                <environmentVariables>
+                  <environmentVariable name=\"ASPNETCORE_ENVIRONMENT\" value=\"Production\" />
+                  <environmentVariable name=\"FIREBASE_CREDENTIALS\" value=\"${{ secrets.FIREBASE_CREDENTIALS }}\" />
+                  <environmentVariable name=\"ConnectionStrings__DefaultConnection\" value=\"${{ secrets.DB_CONNECTION }}\" />
+                </environmentVariables>
+              </aspNetCore>
+            </system.webServer>
+          </location>
+        </configuration>" > publish/web.config
+
+    - name: Create deployment package
+      run: |
+        cd publish
+        zip -r ../deploy.zip *
+        
+    - name: Deploy to EC2
+      uses: easingthemes/ssh-deploy@v4.1.8
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        REMOTE_HOST: ${{ secrets.EC2_HOST }}
+        REMOTE_USER: ${{ secrets.EC2_USERNAME }}
+        SOURCE: "deploy.zip"
+        TARGET: "/var/www/websockets"
+        SCRIPT_AFTER: |
+          cd /var/www/websockets
+          unzip -o deploy.zip
+          rm deploy.zip
+          iisreset
