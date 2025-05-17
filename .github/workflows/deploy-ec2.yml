@@ -1,37 +1,47 @@
+# Nombre del workflow que aparecerá en la pestaña Actions de GitHub
 name: Build and Deploy to EC2
 
+# Define cuándo se ejecutará el workflow
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]  # Se ejecuta cuando hay un push a la rama main
 
+# Definición de los trabajos a ejecutar
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest    # Usa una máquina virtual Ubuntu para ejecutar el workflow
     
     steps:
+    # Paso 1: Descarga el código del repositorio
     - uses: actions/checkout@v4
     
+    # Paso 2: Configura el entorno .NET
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '8.0.x'    # Especifica la versión de .NET a usar
     
+    # Paso 3: Lista la estructura del proyecto para debugging
     - name: List Solution Structure
       run: |
         pwd
         ls -la
-        
+    
+    # Paso 4: Restaura las dependencias del proyecto
     - name: Restore dependencies
       run: |
         ls -R
         dotnet restore
-        
+    
+    # Paso 5: Compila el proyecto en modo Release
     - name: Build
       run: dotnet build --configuration Release
     
+    # Paso 6: Publica la aplicación
     - name: Publish
       run: dotnet publish --configuration Release --output ./publish
     
+    # Paso 7: Genera el archivo web.config con la configuración de IIS
     - name: Generate web.config
       run: |
         echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>
@@ -53,21 +63,27 @@ jobs:
           </location>
         </configuration>" > publish/web.config
 
+    # Paso 8: Crea el paquete de despliegue
     - name: Create deployment package
       run: |
         cd publish
         zip -r ../deploy.zip *
-        
+    
+    # Paso 9: Despliega a EC2 usando SSH
     - name: Deploy to EC2
       uses: easingthemes/ssh-deploy@v4.1.8
       env:
-        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-        REMOTE_HOST: ${{ secrets.EC2_HOST }}
-        REMOTE_USER: ${{ secrets.EC2_USERNAME }}
-        SOURCE: "deploy.zip"
-        TARGET: "C:/WebPages/chatHome"
-        SCRIPT_AFTER: |
+        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}     # Clave SSH para conectar a EC2
+        REMOTE_HOST: ${{ secrets.EC2_HOST }}            # Hostname o IP de EC2
+        REMOTE_USER: ${{ secrets.EC2_USERNAME }}        # Usuario para conectar (Administrator)
+        SOURCE: "deploy.zip"                            # Archivo a enviar
+        TARGET: "C:/WebPages/chatHome"                  # Carpeta destino en EC2
+        SCRIPT_AFTER: |                                 # Comandos a ejecutar después del despliegue
+          # Descomprime el archivo zip
           powershell -Command "Expand-Archive -Path C:/WebPages/chatHome/deploy.zip -DestinationPath C:/WebPages/chatHome -Force"
+          # Elimina el zip
           powershell -Command "Remove-Item C:/WebPages/chatHome/deploy.zip -Force"
+          # Detiene el sitio en IIS
           powershell -Command "& 'C:\Windows\System32\inetsrv\appcmd.exe' stop site 'chatHome'"
+          # Inicia el sitio en IIS
           powershell -Command "& 'C:\Windows\System32\inetsrv\appcmd.exe' start site 'chatHome'"
