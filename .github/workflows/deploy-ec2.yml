@@ -62,9 +62,9 @@ jobs:
         REMOTE_HOST: ${{ secrets.EC2_HOST }}
         REMOTE_USER: ${{ secrets.EC2_USERNAME }}
         SOURCE: "deploy.zip"
-        TARGET: "/var/www/websockets"
+        TARGET: "C:/WebPages/chatHome"
         SCRIPT_AFTER: |
-          cd /var/www/websockets
-          unzip -o deploy.zip
-          rm deploy.zip
-          iisreset
+          powershell -Command "Expand-Archive -Path C:/WebPages/chatHome/deploy.zip -DestinationPath C:/WebPages/chatHome -Force"
+          powershell -Command "Remove-Item C:/WebPages/chatHome/deploy.zip -Force"
+          powershell -Command "& 'C:\Windows\System32\inetsrv\appcmd.exe' stop site 'chatHome'"
+          powershell -Command "& 'C:\Windows\System32\inetsrv\appcmd.exe' start site 'chatHome'"
