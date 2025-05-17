@@ -22,24 +22,24 @@ jobs:
         dotnet-version: '8.0.x'    # Especifica la versión de .NET a usar
     
     # Paso 3: Lista la estructura del proyecto para debugging
-    - name: List Solution Structure
+    - name: Debug Directory Structure
       run: |
+        echo "Current directory:"
         pwd
-        ls -la
+        echo "Project structure:"
+        ls -R
     
     # Paso 4: Restaura las dependencias del proyecto
     - name: Restore dependencies
-      run: |
-        ls -R
-        dotnet restore
+      run: dotnet restore ./WebSockets/WebSockets.sln
     
     # Paso 5: Compila el proyecto en modo Release
     - name: Build
-      run: dotnet build --configuration Release
+      run: dotnet build ./WebSockets/WebSockets.sln --configuration Release --no-restore
     
     # Paso 6: Publica la aplicación
     - name: Publish
-      run: dotnet publish --configuration Release --output ./publish
+      run: dotnet publish ./WebSockets/WebSockets.csproj --configuration Release --no-build --output ./publish
     
     # Paso 7: Genera el archivo web.config con la configuración de IIS
     - name: Generate web.config
@@ -52,7 +52,7 @@ jobs:
                 <add name=\"aspNetCore\" path=\"*\" verb=\"*\" modules=\"AspNetCoreModuleV2\" resourceType=\"Unspecified\" />
               </handlers>
               <aspNetCore processPath=\"dotnet\" arguments=\".\WebSockets.dll\" 
-                stdoutLogEnabled=\"false\" stdoutLogFile=\".\logs\stdout\" hostingModel=\"inprocess\">
+                stdoutLogEnabled=\"true\" stdoutLogFile=\".\logs\stdout\" hostingModel=\"inprocess\">
                 <environmentVariables>
                   <environmentVariable name=\"ASPNETCORE_ENVIRONMENT\" value=\"Production\" />
                   <environmentVariable name=\"FIREBASE_CREDENTIALS\" value=\"${{ secrets.FIREBASE_CREDENTIALS }}\" />
