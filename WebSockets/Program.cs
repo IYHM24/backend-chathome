@@ -41,7 +41,8 @@ string[] allowedOrigins = new[]
     "http://localhost:5173",
     "http://192.168.2.8:4173",
     "http://192.168.2.10:4173",
-    "http://186.30.133.123:5173"
+    "http://186.30.133.123:5173",
+    "https://chathomeapp.netlify.app"
 };
 
 builder.Services.AddCors(options =>
