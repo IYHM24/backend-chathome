@@ -52,27 +52,13 @@ jobs:
               <handlers>
                 <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
               </handlers>
-              <aspNetCore processPath="dotnet" 
-                         arguments=".\WebSockets.dll" 
-                         stdoutLogEnabled="true" 
-                         stdoutLogFile=".\logs\stdout" 
-                         hostingModel="inprocess">
-                <handlerSettings>
-                  <handlerSetting name="debugFile" value=".\logs\aspnetcore-debug.log" />
-                  <handlerSetting name="debugLevel" value="FILE,TRACE,ERROR" />
-                </handlerSettings>
-                <environmentVariables>
-                  <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
-                  <environmentVariable name="ASPNETCORE_LOGGING__CONSOLE__DISABLECOLORS" value="true" />
-                  <environmentVariable name="ASPNETCORE_LOGGING__LOGLEVEL__DEFAULT" value="Debug" />
-                  <environmentVariable name="ASPNETCORE_LOGGING__LOGLEVEL__MICROSOFT" value="Debug" />
-                  <environmentVariable name="FIREBASE_CREDENTIALS" value="${{ secrets.FIREBASE_CREDENTIALS }}" />
-                  <environmentVariable name="ConnectionStrings__DefaultConnection" value="${{ secrets.DB_CONNECTION }}" />
-                </environmentVariables>
+              <aspNetCore processPath="dotnet" arguments=".\WebSockets.dll" stdoutLogEnabled="true" stdoutLogFile=".\logs\stdout" hostingModel="inprocess">
+              <environmentVariables>
+                <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
+                <environmentVariable name="FIREBASE_CREDENTIALS" value="${{ secrets.FIREBASE_CREDENTIALS }}" />
+                <environmentVariable name="ConnectionStrings__DefaultConnection" value="${{ secrets.DB_CONNECTION }}" />
+              </environmentVariables>
               </aspNetCore>
-              <security>
-                <requestFiltering removeServerHeader="true" />
-              </security>
             </system.webServer>
           </location>
         </configuration>
@@ -102,24 +88,11 @@ jobs:
         # Ejecutar comandos remotos usando SSH
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no Administrator@${EC2_HOST} "
           powershell -Command \"
-            # Crear y configurar directorio de logs
-            New-Item -Path 'C:/WebPages/chatHome/logs' -ItemType Directory -Force;
-            $acl = Get-Acl 'C:/WebPages/chatHome/logs';
-            $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule('IIS AppPool\chatHome', 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow');
-            $acl.SetAccessRule($accessRule);
-            Set-Acl 'C:/WebPages/chatHome/logs' $acl;
-            
-            # Desplegar aplicación
             Expand-Archive -Path C:/WebPages/chatHome/deploy.zip -DestinationPath C:/WebPages/chatHome -Force;
             Remove-Item C:/WebPages/chatHome/deploy.zip -Force;
-            
-            # Reiniciar el sitio
             & 'C:\Windows\System32\inetsrv\appcmd.exe' stop site 'chatHome';
             Start-Sleep -Seconds 5;
-            & 'C:\Windows\System32\inetsrv\appcmd.exe' start site 'chatHome';
-            
-            # Limpiar logs antiguos y verificar permisos
-            Get-ChildItem 'C:/WebPages/chatHome/logs' -File | Where-Object {$_.LastWriteTime -lt (Get-Date).AddDays(-7)} | Remove-Item;
+            & 'C:\Windows\System32\inetsrv\appcmd.exe' start site 'chatHome'
           \"
         "
 
