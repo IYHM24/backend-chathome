@@ -6,13 +6,28 @@ using WebSockets.Hubs;
 using static System.Net.WebRequestMethods;
 
 var builder = WebApplication.CreateBuilder(args);
-var firebaseConfig = builder.Environment.IsDevelopment()
-    ? System.Text.Json.JsonSerializer.Serialize(
-        builder.Configuration.GetSection("firebase:config").Get<Dictionary<string, object>>())
-    : Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS");
+// Obtener y procesar las credenciales de Firebase
+string firebaseConfig;
+if (builder.Environment.IsDevelopment())
+{
+    // En desarrollo, usar la configuración del appsettings
+    firebaseConfig = System.Text.Json.JsonSerializer.Serialize(
+        builder.Configuration.GetSection("firebase:config").Get<Dictionary<string, object>>());
+}
+else
+{
+    // En producción, decodificar el base64
+    var base64Credentials = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS");
+    if (string.IsNullOrEmpty(base64Credentials))
+        throw new InvalidOperationException("Firebase credentials not found in environment variables");
+
+    firebaseConfig = System.Text.Encoding.UTF8.GetString(
+        Convert.FromBase64String(base64Credentials));
+}
 
 if (string.IsNullOrEmpty(firebaseConfig))
-    throw new InvalidOperationException("Firebase credentials not found");
+    throw new InvalidOperationException("Firebase credentials could not be processed");
+
 
 
 // Add services to the container.
