@@ -52,13 +52,12 @@ jobs:
               <handlers>
                 <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
               </handlers>
-              <aspNetCore processPath="dotnet" arguments=".\WebSockets.dll" 
-                stdoutLogEnabled="true" stdoutLogFile=".\logs\stdout" hostingModel="inprocess">
-                <environmentVariables>
-                  <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
-                  <environmentVariable name="FIREBASE_CREDENTIALS" value="${{ secrets.FIREBASE_CREDENTIALS }}" />
-                  <environmentVariable name="ConnectionStrings__DefaultConnection" value="${{ secrets.DB_CONNECTION }}" />
-                </environmentVariables>
+              <aspNetCore processPath="dotnet" arguments=".\WebSockets.dll" stdoutLogEnabled="true" stdoutLogFile=".\logs\stdout" hostingModel="inprocess">
+              <environmentVariables>
+                <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
+                <environmentVariable name="FIREBASE_CREDENTIALS" value="${{ secrets.FIREBASE_CREDENTIALS }}" />
+                <environmentVariable name="ConnectionStrings__DefaultConnection" value="${{ secrets.DB_CONNECTION }}" />
+              </environmentVariables>
               </aspNetCore>
             </system.webServer>
           </location>
