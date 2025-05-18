@@ -54,7 +54,7 @@ namespace WebSockets.Controllers
                                 chat_id = c.mensaje.chat_id,
                                 ui_usuario_remitente = usuario,
                             };
-                            responseUsuarios = await _bussiness.MensajesOperations(data);
+                            await _bussiness.MensajesOperations(data);
                         }
                     }
 
