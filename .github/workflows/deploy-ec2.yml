@@ -71,21 +71,50 @@ jobs:
         cd publish
         zip -r ../deploy.zip *
     
-    # Paso 9: Despliega a EC2 usando SSH
+    # Paso 9: Despliega a EC2 usando SCP y SSH
     - name: Deploy to EC2
-      uses: easingthemes/ssh-deploy@v4.1.8
+      shell: bash
       env:
-        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}     # Clave SSH para conectar a EC2
-        REMOTE_HOST: ${{ secrets.EC2_HOST }}            # Hostname o IP de EC2
-        REMOTE_USER: ${{ secrets.EC2_USERNAME }}        # Usuario para conectar (Administrator)
-        SOURCE: "deploy.zip"                            # Archivo a enviar
-        TARGET: "C:/WebPages/chatHome"                  # Carpeta destino en EC2
-        SCRIPT_AFTER: |                                 # Comandos a ejecutar después del despliegue
-          # Descomprime el archivo zip
-          powershell -Command "Expand-Archive -Path C:/WebPages/chatHome/deploy.zip -DestinationPath C:/WebPages/chatHome -Force"
-          # Elimina el zip
-          powershell -Command "Remove-Item C:/WebPages/chatHome/deploy.zip -Force"
-          # Detiene el sitio en IIS
-          powershell -Command "& 'C:\Windows\System32\inetsrv\appcmd.exe' stop site 'chatHome'"
-          # Inicia el sitio en IIS
-          powershell -Command "& 'C:\Windows\System32\inetsrv\appcmd.exe' start site 'chatHome'"
+        SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+      run: |
+        # Configurar SSH key
+        mkdir -p ~/.ssh
+        echo "$SSH_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        
+        # Copiar archivo usando SCP
+        scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no deploy.zip Administrator@${EC2_HOST}:C:/WebPages/chatHome/
+        
+        # Ejecutar comandos remotos usando SSH
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no Administrator@${EC2_HOST} "
+          powershell -Command \"
+            Expand-Archive -Path C:/WebPages/chatHome/deploy.zip -DestinationPath C:/WebPages/chatHome -Force;
+            Remove-Item C:/WebPages/chatHome/deploy.zip -Force;
+            & 'C:\Windows\System32\inetsrv\appcmd.exe' stop site 'chatHome';
+            Start-Sleep -Seconds 5;
+            & 'C:\Windows\System32\inetsrv\appcmd.exe' start site 'chatHome'
+          \"
+        "
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
