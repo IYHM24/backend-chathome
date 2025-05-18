@@ -1,6 +1,7 @@
 ﻿using ApiBussines;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Models;
 using System.Threading.Tasks;
 
@@ -12,11 +13,31 @@ namespace WebSockets.Controllers
     public class UsuariosController : ControllerBase
     {
         private Bussiness Bussiness;
+        private readonly IConfiguration _configuration;
 
         //Constructor
         public UsuariosController(IConfiguration conf) {
 
-            Bussiness = new Bussiness(conf.GetConnectionString("DefaultConnection")!.ToString());
+            _configuration = conf;
+            string connectionString;
+
+            // Verifica el entorno
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+            if (environment == "Production")
+            {
+                // En producción, usa la variable de entorno
+                connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                    ?? throw new InvalidOperationException("Connection string not found in environment variables");
+            }
+            else
+            {
+                // En desarrollo, usa appsettings.Development.json
+                connectionString = conf.GetConnectionString("DefaultConnection")
+                    ?? throw new InvalidOperationException("Connection string not found in configuration");
+            }
+
+            Bussiness = new Bussiness(connectionString);
         }
 
         /// <summary>
