@@ -64,6 +64,7 @@ namespace WebSockets.Controllers
                     responseUsuarios = "";
                 }
                 //Notificar cambios
+                //Hola mundo
                 await _userHubContext!.Clients.All.SendAsync("updateSidebar", "actualizar");
 
                 return Ok(new { status = true, msj = new { responseMensajes, responseUsuarios } });
